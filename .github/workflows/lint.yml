@@ -2,8 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: ["**"]
-
+    branches-ignore:
+      - main
+      
 jobs:
   lint:
     runs-on: ubuntu-latest
