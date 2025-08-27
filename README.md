@@ -1,4 +1,6 @@
-# fecthy
+<p align="center">
+  <img src="assets/logo.png" alt="fecthy logo" width="200" />
+</p>
 
 **fecthy** is a lightweight TypeScript toolkit to help you structure and secure your HTTP calls on the frontend, with centralized error handling, strong typing, and support for DTO/DAO patterns.
 
