@@ -56,7 +56,13 @@ export class HttpClient {
       const response = await fetch(`${this.baseUrl}${url}`, init);
       return this._parseResponse<T>(response);
     } catch (error) {
-      throw httpErrorFromStatus(error.status, error.message);
+      if (error && typeof error === "object" && "status" in error && "message" in error) {
+        throw httpErrorFromStatus(
+          (error as { status: number }).status,
+          (error as { message: string }).message
+        );
+      }
+      throw error;
     }
   }
 
