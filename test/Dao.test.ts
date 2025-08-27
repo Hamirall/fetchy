@@ -5,6 +5,7 @@ const dummyDao: Dto = {
   getOne: async <T>(url: string) => ({ url } as T),
   create: async <T>(url: string, data: T) => data,
   update: async <T>(url: string, data: T) => data,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   delete: async (url: string) => {},
 };
 
