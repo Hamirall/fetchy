@@ -12,7 +12,7 @@ describe("url", () => {
     expect(buildPath(base, "https://cdn.test.com/x")).toBe("https://cdn.test.com/x");
   });
 
-  it("builds resource segments like the axios wrapper", () => {
+  it("builds resource segments", () => {
     expect(
       buildPath(base, { path: "teams", resources: [{ name: "players", value: 3 }, { name: "stats" }] }),
     ).toBe("https://api.test.com/api/teams/players/3/stats");
