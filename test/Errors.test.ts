@@ -41,3 +41,18 @@ describe("httpErrorFromStatus", () => {
     expect(err.message).toMatch(/teapot/);
   });
 });
+
+describe("httpErrorFromStatus details", () => {
+  it("maps 409, 422 and every 5xx", () => {
+    expect(httpErrorFromStatus(409).name).toBe("ConflictError");
+    expect(httpErrorFromStatus(422).name).toBe("UnprocessableEntityError");
+    const err = httpErrorFromStatus(503);
+    expect(err.name).toBe("ServerError");
+    expect(err.status).toBe(503);
+  });
+
+  it("keeps url, method, body and message", () => {
+    const err = httpErrorFromStatus(404, { url: "/x", method: "GET", body: { a: 1 }, message: "Nope" });
+    expect(err).toMatchObject({ url: "/x", method: "GET", body: { a: 1 }, message: "Nope" });
+  });
+});

@@ -2,17 +2,18 @@
   <img src="assets/logo.png" alt="fecthy logo" width="200" />
 </p>
 
-**fecthy** is a lightweight TypeScript toolkit to help you structure and secure your HTTP calls on the frontend, with centralized error handling, strong typing, and support for DTO/DAO patterns.
+**fecthy** is a lightweight TypeScript toolkit to structure your HTTP calls on the frontend: a `fetch` client with no dependency, typed DTOs and DAOs, typed errors and centralized hooks. It replaces the former axios wrapper.
 
 ---
 
 ## Main Features
 
-- **HttpClient**: Generic HTTP client based on `fetch`, supporting REST methods, dynamic header injection (e.g. Bearer token), and centralized HTTP error handling.
-- **Enums**: Constants for HTTP methods (`HttpMethods`), status codes (`HttpCode`), and content types (`HttpType`).
-- **Error Handling**: Custom error classes (`HttpError`, `UnauthorizedError`, etc.) and a utility function to throw the right error based on status code.
-- **Generic DAO**: Interface and base class to factorize CRUD access to your resources, with strong typing.
-- **Modular Structure**: Clear separation between transport, errors, enums, and interfaces.
+- **HttpClient** on native `fetch`, no dependency: `get / post / put / patch / delete / upload`, query params, timeouts, abort signals.
+- **DTOs**: `getDto`, `listDto`, `postDto`... return instances of your DTO classes, with the type inferred from the class.
+- **RestDao**: ready-made CRUD (`list`, `getOne`, `create`, `update`, `patch`, `delete`) for a REST resource, to extend with your own calls.
+- **Typed errors**: `NotFoundError`, `UnauthorizedError`, `UnprocessableEntityError`, `ServerError`, `NetworkError`, `TimeoutError`... carrying the status, URL, method and response body.
+- **Hooks**: dynamic token and headers, `onRequest`, `onError` (global toast, logout on 401), `debug` logging.
+- **URL builder**: plain strings or structured paths (`{ path, resources, prefix }`, from the former axios wrapper).
 
 ---
 
@@ -29,55 +30,119 @@ yarn add @valomiral/fecthy
 ## Quick Example
 
 ```typescript
-import { HttpClient } from "@valomiral/fecthy";
-import UserDto from "./dto/User";
+import { AbstractDto, HttpClient, HttpMethods, NotFoundError, RestDao, UnauthorizedError } from "@valomiral/fecthy";
 
-// Create the client with token management
-const http = new HttpClient("https://api.example.com", () =>
-  localStorage.getItem("token"),
-);
+class UserDto extends AbstractDto {
+  id!: number;
+  name!: string;
+}
 
-// Typed call with DTO validation
+const http = new HttpClient("https://api.example.com/api", {
+  token: () => localStorage.getItem("token"), // read on every request
+  timeout: 10_000,
+  onError: (err) => {
+    if (err instanceof UnauthorizedError) location.assign("/login");
+  },
+});
+
+// Typed calls: `user` is a UserDto
 const user = await http.getDto("/users/42", UserDto);
+const users = await http.listDto("/users", UserDto, { params: { page: 2, role: ["admin", "dev"] } });
+
+// Plain calls
+const stats = await http.get<{ wins: number }>("/stats");
+await http.patch("/users/42", { name: "Neo" });
+await http.delete("/users/42");
+await http.upload("/avatars", { file: input.files[0], label: "me" });
+
+// Status and headers when needed
+const { data, status, headers } = await http.send(HttpMethods.POST, "/users", { name: "Trinity" });
 
 // Fine-grained error handling
 try {
-  const user = await http.getDto("/users/42", UserDto);
+  await http.getDto("/users/42", UserDto);
 } catch (err) {
-  if (err instanceof UnauthorizedError) {
-    // Redirect to login
-  } else if (err instanceof NotFoundError) {
-    // Show "user not found"
-  } else {
-    // Generic error
+  if (err instanceof NotFoundError) {
+    // err.body holds the parsed response, err.message the API message when there is one
   }
 }
 ```
+
+### DAO
+
+```typescript
+class UserDao extends RestDao<UserDto> {
+  constructor(http: HttpClient) {
+    super(http, "/users", UserDto);
+  }
+
+  me() {
+    return this.http.getDto("/users/me", UserDto);
+  }
+}
+
+const users = new UserDao(http);
+await users.list({ page: 1 }); // GET /users?page=1 (plain array, `items`, `data`, `member` or `hydra:member`)
+await users.getOne(42); // GET /users/42
+await users.create({ name: "Morpheus" }); // POST /users
+await users.patch(42, { name: "Neo" }); // PATCH /users/42
+await users.delete(42); // DELETE /users/42
+```
+
+### Client options
+
+| Option        | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `token`       | Bearer token: a string or a (async) function read on every request          |
+| `headers`     | Headers for every request: an object or a (async) function                  |
+| `timeout`     | Default timeout in ms, throws `TimeoutError`                                |
+| `credentials` | Forwarded to `fetch` (`"include"` for cookies cross-origin)                 |
+| `onRequest`   | `(ctx) => void`: last tweak of `ctx.init` before sending                    |
+| `onError`     | `(error, ctx) => void`: called for every error before it is thrown          |
+| `debug`       | Logs failed requests (URL, status, response, body) to the console           |
+
+Per request: `params`, `headers`, `signal`, `timeout`, `responseType` (`"json" | "text" | "blob" | "arrayBuffer"`).
+Without `responseType`, the body is parsed as JSON when the server sends a JSON content type (`application/json`, `application/ld+json`...), as text otherwise, and empty responses (204) give `undefined`.
+
+---
+
+## Migrating from the axios wrapper
+
+`wraper-axios` is merged into fecthy, on top of `fetch`:
+
+| wraper-axios                          | fecthy                                                       |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `BASE_URL + BASE_PATH` in config      | `new HttpClient(BASE_URL + BASE_PATH, options)`              |
+| `get(path, params)`                   | `http.get(path, { params })`                                 |
+| `post(path, params, data)`            | `http.post(path, data, { params })`                          |
+| `postFile(path, params, data)`        | `http.upload(path, data, { params })`                        |
+| `update(path, data, params)`          | `http.put(path, data, { params })`                           |
+| `remove(path, data)`                  | `http.delete(path, { body: data })`                          |
+| `{ data, status }` result             | `http.send(method, path, body, opts)`, or `get`... for data  |
+| `{ path, prefix, ressources }`        | same shape, spelled `resources`                              |
+| `managerErrorsApi` console logging    | `debug: true`, or your own `onError`                         |
 
 ---
 
 ## Project Structure
 
 ```
+index.ts              # Public exports
 src/
-  HttpClient.ts         # Typed and extensible HTTP client
-  enums/
-    HttpCode.ts         # HTTP status codes (enum)
-    HttpMethods.ts      # HTTP methods (enum)
-    HttpType.ts         # HTTP content types (enum)
-  errors/
-    Errors.ts           # Custom error classes and utility
-  interfaces/
-    Dao.ts              # Generic DAO interface
-  dto/
-    User.ts             # Example typed DTO
+  HttpClient.ts       # fetch client, DTO helpers, hooks
+  url.ts              # URL and query string builder
+  dao/RestDao.ts      # Ready-made REST DAO
+  dto/AbstractDto.ts  # Base DTO class with parse()
+  enums/              # HttpMethods, HttpCode, HttpType
+  errors/Errors.ts    # Typed errors and httpErrorFromStatus()
+  interfaces/Dao.ts   # Generic DAO interface
 ```
 
 ---
 
 ## Key Concepts
 
-- **DTO**: Typed data transfer objects, with possible validation via parsers or setters.
+- **DTO**: Typed data transfer objects; override `static parse()` to validate or transform the raw payload.
 - **DAO**: Data access objects, factoring HTTP calls for each resource.
 - **Error Handling**: Each HTTP code can trigger a specific, easily catchable error.
 - **Strong Typing**: All calls are typed, with autocompletion and TypeScript safety.

@@ -1,21 +1,20 @@
 {
   "name": "fecthy",
   "version": "0.0.1",
-  "description": "Lightweight toolkit for front-end DTOs and typed API calls via fetch with centralized filters, normalization, error handling, and caching.",
+  "description": "Lightweight fetch-based HTTP client for the front-end: typed DTOs, REST DAOs, URL builder, typed errors, timeouts and hooks. No dependency.",
   "license": "MIT",
   "author": "Hamirall",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
     "format": "prettier --write .",
     "test": "jest",
     "build": "tsc"
-  },
-  "dependencies": {
-    "typescript": "^5.9.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
@@ -28,6 +27,16 @@
     "typescript-eslint": "^8.39.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
-    "@types/jest": "^29.5.11"
-  }
+    "@types/jest": "^29.5.11",
+    "typescript": "^5.9.2"
+  },
+  "keywords": [
+    "fetch",
+    "http",
+    "client",
+    "dto",
+    "dao",
+    "typescript",
+    "axios-alternative"
+  ]
 }
