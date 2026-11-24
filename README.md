@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="fecthy logo" width="200" />
 </p>
 
-**fecthy** is a lightweight TypeScript toolkit to structure your HTTP calls on the frontend: a `fetch` client with no dependency, typed DTOs and DAOs, typed errors and centralized hooks. It replaces the former axios wrapper.
+**fecthy** is a lightweight TypeScript toolkit to structure your HTTP calls on the frontend: a `fetch` client with no dependency, typed DTOs and DAOs, typed errors and centralized hooks.
 
 ---
 
@@ -13,16 +13,16 @@
 - **RestDao**: ready-made CRUD (`list`, `getOne`, `create`, `update`, `patch`, `delete`) for a REST resource, to extend with your own calls.
 - **Typed errors**: `NotFoundError`, `UnauthorizedError`, `UnprocessableEntityError`, `ServerError`, `NetworkError`, `TimeoutError`... carrying the status, URL, method and response body.
 - **Hooks**: dynamic token and headers, `onRequest`, `onError` (global toast, logout on 401), `debug` logging.
-- **URL builder**: plain strings or structured paths (`{ path, resources, prefix }`, from the former axios wrapper).
+- **URL builder**: plain strings or structured paths (`{ path, resources, prefix }`).
 
 ---
 
 ## Installation
 
 ```bash
-npm install @valomiral/fecthy
+npm install fecthy
 # or
-yarn add @valomiral/fecthy
+yarn add fecthy
 ```
 
 ---
@@ -30,7 +30,7 @@ yarn add @valomiral/fecthy
 ## Quick Example
 
 ```typescript
-import { AbstractDto, HttpClient, HttpMethods, NotFoundError, RestDao, UnauthorizedError } from "@valomiral/fecthy";
+import { AbstractDto, HttpClient, HttpMethods, NotFoundError, RestDao, UnauthorizedError } from "fecthy";
 
 class UserDto extends AbstractDto {
   id!: number;
@@ -103,24 +103,6 @@ await users.delete(42); // DELETE /users/42
 
 Per request: `params`, `headers`, `signal`, `timeout`, `responseType` (`"json" | "text" | "blob" | "arrayBuffer"`).
 Without `responseType`, the body is parsed as JSON when the server sends a JSON content type (`application/json`, `application/ld+json`...), as text otherwise, and empty responses (204) give `undefined`.
-
----
-
-## Migrating from the axios wrapper
-
-`wraper-axios` is merged into fecthy, on top of `fetch`:
-
-| wraper-axios                          | fecthy                                                       |
-| ------------------------------------- | ------------------------------------------------------------ |
-| `BASE_URL + BASE_PATH` in config      | `new HttpClient(BASE_URL + BASE_PATH, options)`              |
-| `get(path, params)`                   | `http.get(path, { params })`                                 |
-| `post(path, params, data)`            | `http.post(path, data, { params })`                          |
-| `postFile(path, params, data)`        | `http.upload(path, data, { params })`                        |
-| `update(path, data, params)`          | `http.put(path, data, { params })`                           |
-| `remove(path, data)`                  | `http.delete(path, { body: data })`                          |
-| `{ data, status }` result             | `http.send(method, path, body, opts)`, or `get`... for data  |
-| `{ path, prefix, ressources }`        | same shape, spelled `resources`                              |
-| `managerErrorsApi` console logging    | `debug: true`, or your own `onError`                         |
 
 ---
 

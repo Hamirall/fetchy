@@ -5,7 +5,7 @@ export interface PathResource {
 }
 
 /**
- * Structured path, the format of the former axios wrapper:
+ * Structured path:
  * `{ path: "teams", resources: [{ name: "players", value: 3 }] }` → `<base>teams/players/3`.
  */
 export interface PathSpec {
